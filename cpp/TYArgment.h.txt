@@ -1,0 +1,85 @@
+﻿//
+//  TYArgment.h
+//  Tukuyomi Qt
+//
+//  Abstract base class for script arguments
+//
+
+#ifndef TYArgment_h
+#define TYArgment_h
+
+#include <QObject>
+#include <QString>
+#include <QVariant>
+
+enum class TYArgType {
+    TYDigitArgType = 0,
+    TYConstStringArgType,
+    TYIntVarArgType,
+    TYStringVarArgType,
+    TYAliasArgType,
+    TYFchkArgType,
+    TYArrayArgType
+};
+
+enum class TYVarType {
+    TYInvalidVarType = 0,
+    TYStringVarType = 1,
+    TYDigitVarTypeMask = 2
+};
+
+class TYArgment : public QObject
+{
+    Q_OBJECT
+
+public:
+    explicit TYArgment(QObject* parent = nullptr);
+    ~TYArgment();
+
+    TYArgType argType() const { return m_argType; }
+    TYVarType varType() const { return m_varType; }
+    QString rawString() const { return m_rawString; }
+
+    QVariant intValue() const;
+    QVariant intNumber() const;
+    QString stringObj() const;
+    QVariant varID() const { return m_varID; }
+
+    static TYArgment* argmentWithString(const QString& str);
+    static TYArgment* argmentWithVarID(const QVariant& id);
+
+private:
+    TYArgType m_argType;
+    TYVarType m_varType;
+    QString m_rawString;
+    QVariant m_varID;
+};
+
+// String variable argument
+class TYStringVarArgment : public TYArgment
+{
+    Q_OBJECT
+
+public:
+    explicit TYStringVarArgment(const QVariant& varID, QObject* parent = nullptr);
+};
+
+// Integer variable argument
+class TYIntVarArgment : public TYArgment
+{
+    Q_OBJECT
+
+public:
+    explicit TYIntVarArgment(const QVariant& varID, QObject* parent = nullptr);
+};
+
+// Constant string argument
+class TYConstStringArgment : public TYArgment
+{
+    Q_OBJECT
+
+public:
+    explicit TYConstStringArgment(const QString& str, QObject* parent = nullptr);
+};
+
+#endif // TYArgment_h

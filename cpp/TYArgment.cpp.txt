@@ -1,0 +1,71 @@
+﻿//
+//  TYArgment.cpp
+//  Tukuyomi Qt
+//
+//  Abstract base class for script arguments
+//
+
+#include "TYArgment.h"
+
+TYArgment::TYArgment(QObject* parent)
+    : QObject(parent)
+    , m_argType(TYArgType::TYDigitArgType)
+    , m_varType(TYVarType::TYDigitVarTypeMask)
+{
+}
+
+TYArgment::~TYArgment()
+{
+}
+
+QVariant TYArgment::intValue() const
+{
+    return m_varID.toInt();
+}
+
+QVariant TYArgment::intNumber() const
+{
+    return m_varID;
+}
+
+QString TYArgment::stringObj() const
+{
+    return m_rawString;
+}
+
+TYArgment* TYArgment::argmentWithString(const QString& str)
+{
+    return new TYConstStringArgment(str);
+}
+
+TYArgment* TYArgment::argmentWithVarID(const QVariant& id)
+{
+    return new TYIntVarArgment(id);
+}
+
+// TYStringVarArgment
+TYStringVarArgment::TYStringVarArgment(const QVariant& varID, QObject* parent)
+    : TYArgment(parent)
+{
+    m_argType = TYArgType::TYStringVarArgType;
+    m_varType = TYVarType::TYStringVarType;
+    m_varID = varID;
+}
+
+// TYIntVarArgment
+TYIntVarArgment::TYIntVarArgment(const QVariant& varID, QObject* parent)
+    : TYArgment(parent)
+{
+    m_argType = TYArgType::TYIntVarArgType;
+    m_varType = TYVarType::TYDigitVarTypeMask;
+    m_varID = varID;
+}
+
+// TYConstStringArgment
+TYConstStringArgment::TYConstStringArgment(const QString& str, QObject* parent)
+    : TYArgment(parent)
+{
+    m_argType = TYArgType::TYConstStringArgType;
+    m_varType = TYVarType::TYStringVarType;
+    m_rawString = str;
+}

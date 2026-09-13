@@ -1,0 +1,134 @@
+﻿#include "NscrParser.tab.h"
+#include "TYScriptEngine.h"
+#include "TYIntVarArgment.h"
+#include "TYStringVarArgment.h"
+#include "TYArrayVarArgment.h"
+#include "TYFchkStringArgment.h"
+
+#include <cstdio>
+#include <cstdlib>
+#include <cstring>
+#include <vector>
+#include <string>
+
+// Static helper functions implementation
+static std::vector<TYArgment*>* arrayIfNotArray(TYArgment* receiver)
+{
+    if (!receiver || !receiver->canAddObject()) {
+        std::vector<TYArgment*>* arr = new std::vector<TYArgment*>();
+        arr->push_back(receiver);
+        return arr;
+    }
+    return receiver->toArray();
+}
+
+static std::vector<TYArgment*>* arrayWithAddObject(TYArgment* receiver, TYArgment* aObject)
+{
+    std::vector<TYArgment*>* arr = nullptr;
+
+    if (!receiver || !receiver->canAddObject()) {
+        arr = new std::vector<TYArgment*>();
+        arr->push_back(receiver);
+    } else {
+        arr = receiver->toArray();
+    }
+
+    if (aObject && aObject->canAddObject()) {
+        std::vector<TYArgment*>* srcArr = aObject->toArray();
+        arr->insert(arr->end(), srcArr->begin(), srcArr->end());
+    } else {
+        arr->push_back(aObject);
+    }
+
+    return arr;
+}
+
+static std::vector<TYArgment*>* arrayOfForCmd(TYArgment* bindVar,
+                                              TYOpType op,
+                                              TYArgment* start,
+                                              TYArgment* to_token,
+                                              TYArgment* end,
+                                              TYArgment* step_token,
+                                              TYArgment* step)
+{
+    if (op != TYEqualOpType) {
+        return nullptr;
+    }
+
+    std::string toStr = to_token ? to_token->stringObj() : "";
+    if (toStr != "to") {
+        return nullptr;
+    }
+
+    if (step_token) {
+        std::string stepStr = step_token->stringObj();
+        if (stepStr != "step") {
+            return nullptr;
+        }
+    }
+
+    if (!step) {
+        step = TYArgment::createIntNumber(1);
+    }
+
+    std::vector<TYArgment*>* arr = new std::vector<TYArgment*>();
+    arr->push_back(bindVar);
+    arr->push_back(start);
+    arr->push_back(end);
+    arr->push_back(step);
+
+    return arr;
+}
+
+int NscrParser::TYParserReadLine = 0;
+
+void NscrParser::TYParserFixPredictLine()
+{
+    // Placeholder - would be implemented based on lexer integration
+}
+
+void NscrParser::TYParserBEGIN_INITIAL()
+{
+    // Placeholder - would be implemented based on lexer integration
+}
+
+NscrParser::NscrParser()
+    : yychar(0), yynerrs(0), yydebug(false)
+{
+}
+
+NscrParser::~NscrParser()
+{
+}
+
+void NscrParser::yyerror(const char* msg)
+{
+    fprintf(stderr, "Parse error: %s\n", msg);
+}
+
+int NscrParser::parse()
+{
+    return yyparse_internal();
+}
+
+// Static method implementations for helper functions
+std::vector<TYArgment*>* NscrParser::arrayIfNotArray(TYArgment* receiver)
+{
+    return ::arrayIfNotArray(receiver);
+}
+
+std::vector<TYArgment*>* NscrParser::arrayWithAddObject(TYArgment* receiver, TYArgment* aObject)
+{
+    return ::arrayWithAddObject(receiver, aObject);
+}
+
+std::vector<TYArgment*>* NscrParser::arrayOfForCmd(TYArgment* bindVar,
+                                                   TYOpType op,
+                                                   TYArgment* start,
+                                                   TYArgment* to_token,
+                                                   TYArgment* end,
+                                                   TYArgment* step_token,
+                                                   TYArgment* step)
+{
+    return ::arrayOfForCmd(bindVar, op, start, to_token, end, step_token, step);
+}
