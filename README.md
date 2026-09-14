@@ -96,3 +96,19 @@ tukineko pygame移植。改不下去（懒），我打算这几天把代码开�
 当然我的长远计划是另外做tukineko的新改良版，用于替代nscripter和onscripter，
 但至少要先跑通tukineko的原版功能
 ```
+
+## Qt5 for Windows 11
+* qt-opensource-windows-x86-mingw492-5.6.1-1.exe
+* qt-creator-opensource-windows-x86-4.0.0.exe
+
+## Qt5 for Xubuntu 20.04
+* sudo apt install qt5-default
+​​
+## Qt5 for Xubuntu 25.04
+* sudo apt install qtbase5-dev
+* ====
+* https://www.thundercomm.com/rubik-pi-3/cn/docs/rubik-pi-3-user-manual/1.1.2/qt5-user-guide
+* sudo apt install build-essential  
+* sudo apt install qtcreator  
+* sudo apt install qtbase5-dev qtchooser qt5-qmake qtbase5-dev-tools qtbase5-examples qtbase5-doc-html  
+* ??? not need qt5-doc ????
