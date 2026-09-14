@@ -99,7 +99,10 @@ tukineko pygame移植。改不下去（懒），我打算这几天把代码开�
 
 ## Qt5 for Windows 11
 * qt-opensource-windows-x86-mingw492-5.6.1-1.exe
-* qt-creator-opensource-windows-x86-4.0.0.exe
+* (not need qt-creator-opensource-windows-x86-4.0.0.exe)
+* **NOTE:** Qt 5.6.1 is too old,
+* May cause incompatibility between the code and the latest Qt5,   
+* but I like to use this version, Be Careful !!!  
 
 ## Qt5 for Xubuntu 20.04
 * sudo apt install qt5-default
@@ -111,4 +114,4 @@ tukineko pygame移植。改不下去（懒），我打算这几天把代码开�
 * sudo apt install build-essential  
 * sudo apt install qtcreator  
 * sudo apt install qtbase5-dev qtchooser qt5-qmake qtbase5-dev-tools qtbase5-examples qtbase5-doc-html  
-* ??? not need qt5-doc ????
+* (??? not need qt5-doc ????)
