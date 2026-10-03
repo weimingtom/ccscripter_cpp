@@ -1,0 +1,12 @@
+#ifndef QNUMBER_H
+#define QNUMBER_H
+
+#include <QString>
+
+class QNumber : public QString {
+private:
+	double numberVal;
+};
+
+#endif
+

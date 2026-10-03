@@ -52,7 +52,7 @@ public:
     int spriteID() const { return m_spriteID; }
 
     void draw(QPainter* painter) override; // override
-    void loadImageFromPath() override;
+    void loadImageFromPath() /*override*/;
 
     void didChangeCell();
 

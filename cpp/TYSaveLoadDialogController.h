@@ -70,7 +70,7 @@ public:
 
 private:
     QDialog* m_window;
-    QTableWidget* tableView;
+    QTableWidget* tableView_;
     QPushButton* okButton;
 
     QMap<int, QDateTime> dataDict;

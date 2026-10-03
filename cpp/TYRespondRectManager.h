@@ -38,10 +38,10 @@
 #include <QPainter>
 
 #ifndef VSCREEN_WIDTH
-#define VSCREEN_WIDTH 640
+#define VSCREEN_WIDTH (640)
 #endif
 #ifndef VSCREEN_HEIGHT
-#define VSCREEN_HEIGHT 480
+#define VSCREEN_HEIGHT (480)
 #endif
 
 class TYStageManager;

@@ -38,10 +38,13 @@
 
 class TYStageManager;
 
+/*
 enum {
     TYButtonUnInitialize = -1,
     TYButtonNoSelected = 0
-};
+};*/
+#define TYButtonUnInitialize (-1)
+#define TYButtonNoSelected (0)
 
 class TYButton : public QObject
 {

@@ -38,8 +38,8 @@ public:
     TYSelectionManager(TYStageManager* manager, QObject* parent = nullptr);
     ~TYSelectionManager();
 
-    void initialButtonImage() override; // override
-    bool changeSelection(int index) override; // override
+    void initialButtonImage() /*override*/; // override
+    bool changeSelection(int index) /*override*/; // override
 };
 
 #endif // TYSelectionManager_h

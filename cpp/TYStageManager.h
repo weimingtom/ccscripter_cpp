@@ -225,7 +225,8 @@ private:
 
     QMap<QString, QObject*> m_barDict;
 
-    TYNovelLayer* m_novelLayer;
+//FIXME:
+    //TYNovelLayer* m_novelLayer;
 
     QTimer* m_printTimer;
     QTimer* m_autoTimer;
@@ -425,8 +426,8 @@ signals:
 //#define VSCREEN_WIDTH 640
 //#define VSCREEN_HEIGHT 480
 
-extern int VSCREEN_WIDTH;
-extern int VSCREEN_HEIGHT;
+//extern int VSCREEN_WIDTH;
+//extern int VSCREEN_HEIGHT;
 #define LD_LOCATE_LEFT "l"
 #define LD_LOCATE_CENTER "c"
 #define LD_LOCATE_RIGHT "r"

@@ -26,6 +26,9 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF 
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+ 
+#ifndef TYEffecter_h
+#define TYEffecter_h
 
 #include <QObject>
 #include <QImage>
@@ -91,11 +94,11 @@ enum TYEffectDirection {
     TYRightDirection = 8
 };
 
-struct TYEffectDefinition {
+typedef struct TYEffectDefinition {
     TYEffectType type;
     int time;
     QString path;
-};
+} TYEffectDefinition;
 
 inline TYEffectDefinition TYMakeEffectDefinition(TYEffectType aType, int aTime, const QString& aPath) {
     TYEffectDefinition effdef;
@@ -106,4 +109,18 @@ inline TYEffectDefinition TYMakeEffectDefinition(TYEffectType aType, int aTime, 
 }
 
 // NSValueはクラスクラスタなのでオブジェクトを含む構造体を管理するにはラッパを作るしかないわけで。
+class TYEffectDefinitionValue : public QObject {
+    Q_OBJECT
+public:
+    explicit TYEffectDefinitionValue(QObject* parent = nullptr);
+    ~TYEffectDefinitionValue();    
+private:
+    QObject *value;
+
+public:
+    static void *valueWithEffectDefinition(TYEffectDefinition aDefinition);
+    void *initWithEffectDefinition(TYEffectDefinition aDefinition);
+    void getValue(void *buffer);
+};
 #endif // TYEffecter_h
+

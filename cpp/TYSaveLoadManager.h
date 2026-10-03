@@ -54,8 +54,8 @@ public:
 
 private:
     QList<QString> bookmarkArray;
-    QList<bool> existsArray;
-    QList<QString> names;
+    QList<bool> existsArray_;
+    QList<QString> names_;
     int dataNum;
     bool loaded;
 };

@@ -54,10 +54,13 @@ class TYStageManager;
 class TYResourceServer;
 class TYInputStrController;
 
+/*
 struct TYScriptPoint {
     unsigned line;
     unsigned column;
 };
+*/
+struct TYScriptPoint;
 
 class TYScriptEngine : public QObject, public TYSaveDataCoding {
     Q_OBJECT
@@ -127,7 +130,7 @@ public:
     int scanGlobalValue();
 
     QVariantMap encodeWithSaveData() override;
-    void decodeWithSaveData(const QVariant& aObject) override;
+    void decodeWithSaveData(const QVariant& aObject) /*override*/;
 
 signals:
     void scriptCompleted();

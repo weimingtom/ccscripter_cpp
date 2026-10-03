@@ -41,6 +41,17 @@
 // 効果音を扱うクラス。
 class TYSoundController : public QObject {
     Q_OBJECT
+
+//FIXME: addded
+private:
+    bool horizontal;
+    bool reverse;
+    QTime startDate;
+    double phaseInterval;
+    int time;
+    int numberOfColumn;
+    int beforePhase;    
+ 
 private:
     QSoundEffect* m_playSound;
     QString m_soundPath;
@@ -48,13 +59,13 @@ private:
     bool m_postingNotification;
     bool m_isPlaying;
     int m_volume;
-    QTimer* m_checkTimer;
+    QTimer* m_checkTimer;   
 //+(void)setPostingNotification:(BOOL)aBool;
 private:
     void initWithResource(const QString& path, bool loop, int volume);
 public:
-    explicit TYSoundController(QObject* parent = nullptr) : TYEffectGenerater()
-    , horizontal(false)
+    explicit TYSoundController(QObject* parent = nullptr) : //TYEffectGenerater(), 
+    horizontal(false)
     , reverse(false)
     , phaseInterval(0.0)
     , time(0)

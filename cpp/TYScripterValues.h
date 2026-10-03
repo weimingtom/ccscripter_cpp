@@ -51,7 +51,7 @@ public:
     TYScripterValues();
     ~TYScripterValues();
 
-    QVariant encodeWithSaveData() override;
+    QVariantMap/*QVariant*/ encodeWithSaveData() override;
     void decodeWithSaveData(QVariant aObject) override;
 
     QString getStringValue(QVariant idno);

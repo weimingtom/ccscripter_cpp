@@ -43,7 +43,7 @@ public:
 
     void initWithStrings(const QVariantList& aArray, const QVariantList& vArray);
     void setAttribute(const QMap<QString, QVariant>& aDict);
-    QVariantList stringArray() const override;
+    QVariantList stringArray() const /*override*/;
 
     void recache();
     void drawImage();

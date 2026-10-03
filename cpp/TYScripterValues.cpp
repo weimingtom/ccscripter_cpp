@@ -73,7 +73,7 @@ QVector<int> TYScripterValues::subarrayFromIndex(const QList<QVariant>& list, in
     return result;
 }
 
-QVariant TYScripterValues::encodeWithSaveData()
+QVariantMap/*QVariant*/ TYScripterValues::encodeWithSaveData()
 {
     // ローカル変数の値をNSDataに詰めて返す。形式はGlobalと同じ。
     QByteArray saveData;
@@ -106,9 +106,15 @@ QVariant TYScripterValues::encodeWithSaveData()
         arrayValuesMap[it.key().toString()] = QVariant::fromValue(arrValMap);
     }
 
+#if 0
     QVariantList result;
     result.append(saveData);
     result.append(arrayValuesMap);
+#else
+    QVariantMap result;
+    result["0"] = saveData;
+    result["1"] = arrayValuesMap; //FIXME:
+#endif    
     return result;
 }
 

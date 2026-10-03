@@ -9,6 +9,7 @@ set(CMAKE_AUTOUIC ON)
 
 # Qt required packages
 find_package(Qt5 REQUIRED COMPONENTS Core Gui Widgets Multimedia)
+#find_package(Qt5 REQUIRED COMPONENTS Core Gui Widgets)
 
 # Header files
 set(HEADERS
@@ -23,7 +24,7 @@ set(HEADERS
     TYStageManager.h
     
     # Script parsing
-    TYArgment.h
+    #TYArgment.h
     TYArgmentArray.h
     TYArrayValue.h
     TYLoopValue.h
@@ -149,7 +150,7 @@ set(SOURCES
     TYStageManager.cpp
     
     # Script parsing
-    TYArgment.cpp
+    #TYArgment.cpp
     TYArgmentArray.cpp
     TYArrayValue.cpp
     TYLoopValue.cpp
@@ -271,6 +272,7 @@ target_include_directories(tukuyomi PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/Parser)
 
 # Qt linking
 target_link_libraries(tukuyomi Qt5::Core Qt5::Gui Qt5::Widgets Qt5::Multimedia)
+#target_link_libraries(tukuyomi Qt5::Core Qt5::Gui Qt5::Widgets)
 
 # Compiler flags
 if(MSVC)

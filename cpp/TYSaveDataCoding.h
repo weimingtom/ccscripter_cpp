@@ -38,7 +38,7 @@ class TYSaveDataCoding
 {
 public:
     virtual ~TYSaveDataCoding() {}
-    virtual QVariant encodeWithSaveData() = 0;
+    virtual QVariantMap/*QVariant*/ encodeWithSaveData() = 0;
     virtual void decodeWithSaveData(QVariant aObject) = 0;
 };
 
