@@ -3,9 +3,18 @@
 
 #include <QString>
 
-class QNumber : public QString {
+//QString
+class QNumber : public QObject {
+	Q_OBJECT
 private:
 	double numberVal;
+public:
+        QNumber(const QNumber& ref) {
+        	numberVal = ref.numberVal;
+        }
+        QNumber(bool numberVal_) : numberVal(numberVal_) {}
+	static QNumber *numberWithBool(bool nVal) { return new QNumber(nVal); }
+	int toInt() const { return (int)numberVal; }
 };
 
 #endif

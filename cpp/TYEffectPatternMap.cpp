@@ -29,7 +29,7 @@
 
 #include "TYEffectPatternMap.h"
 
-TYEffectPatternMap::TYEffectPatternMap()
+TYEffectPatternMap::TYEffectPatternMap(const QImage& bitmap)
 {
 }
 
@@ -51,3 +51,4 @@ int TYEffectPatternMap::pixelsHigh() const
 {
     return 0; // TODO: implement
 }
+

@@ -30,11 +30,13 @@
 #ifndef TYEffectPatternMap_h
 #define TYEffectPatternMap_h
 
+#include <QObject>
 #include <QImage>
 
-class TYEffectPatternMap {
+class TYEffectPatternMap : public QObject {
+    Q_OBJECT
 public:
-    TYEffectPatternMap();
+    TYEffectPatternMap(const QImage& bitmap);
     ~TYEffectPatternMap();
 
     const unsigned char* patternMapData() const;

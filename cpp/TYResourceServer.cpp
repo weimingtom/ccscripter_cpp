@@ -38,13 +38,18 @@
 #include "TYMiscUtil.h"
 #include "TYEffectPatternMap.h"
 #include "TYCCSProxy.h"
+#include "TYArchiver.h" //for TYArchiver
+#include "TYExecutablePlugin.h"
 #include <QFile>
 #include <QDir>
 #include <QCoreApplication>
 #include <QByteArray>
 #include <QUuid>
+#include <QDebug> //for qWarning
+#include <QNumber>
+#include <QLibrary>
 
-static TYResourceServer* sharedServer = nullptr;
+static TYResourceServer* sharedServer_ = nullptr;
 
 TYResourceServer::TYResourceServer(QObject* parent)
     : QObject(parent)
@@ -55,7 +60,7 @@ TYResourceServer::TYResourceServer(QObject* parent)
     , filelogDict()
     , executableBundles()
     , defaultTransmode(TYTRANSMODE_COPY)
-    , filelog(false)
+    , filelog_(false)
 {
     // 添加NBZ压缩插件支持
     addSoundPressPlugin(QString(), QStringLiteral("nbz"));
@@ -67,10 +72,10 @@ TYResourceServer::~TYResourceServer()
 
 TYResourceServer* TYResourceServer::sharedServer()
 {
-    if (!sharedServer) {
-        sharedServer = new TYResourceServer();
+    if (!sharedServer_) {
+        sharedServer_ = new TYResourceServer();
     }
-    return sharedServer;
+    return sharedServer_;
 }
 
 void TYResourceServer::addArchiver(const QString& path)
@@ -83,7 +88,8 @@ void TYResourceServer::addArchiver(const QString& path)
     arcPath = parts.at(0);
     
     QString fullPath = getNScrRootDirectory() + QDir::separator() + arcPath;
-    arc = new TYArchiver(fullPath);
+    arc = new TYArchiver();
+    arc->initWithContentsOfFile(fullPath);
     
     if (arc) {
         ty_archivers.append(arc);
@@ -117,7 +123,8 @@ QByteArray TYResourceServer::getData(const QString& path)
     QString convPath = winPathToUnix(path);
     
     // 从归档中查找
-    for (TYArchiver* arc : ty_archivers) {
+    for (QObject* arc_ : ty_archivers) {
+        TYArchiver* arc = (TYArchiver*)arc_;
         QByteArray data = arc->unArchivedFile(convPath);
         if (!data.isEmpty())
             return data;
@@ -161,7 +168,7 @@ QImage TYResourceServer::getImage(const QString& path, bool transMode, bool isAn
         transmode = transmode.mid(1);
     }
     
-    if (filelog) {
+    if (filelog_) {
         addlog(path);
     }
     
@@ -257,7 +264,7 @@ QImage TYResourceServer::getImageFromString(const QString& str)
     TYStageManager* manager = TYStageManager::sharedManager();
     
     // 创建文本图像
-    QList<QImage> images = TYStringImage::imagesWithString(
+    QList<TYStringImage *> images = TYStringImage::imagesWithString(
         processedStr.mid(i),
         manager->textAttDict(),
         colors,
@@ -267,7 +274,7 @@ QImage TYResourceServer::getImageFromString(const QString& str)
         manager->isShadow()
     );
     
-    return images.isEmpty() ? QImage() : images.at(0);
+    return images.isEmpty() ? QImage() : *images.at(0)->image(); //FIXME:??? images.at(0)->image()
 }
 
 void TYResourceServer::addSpi(const QString& pluginName, const QString& extension)
@@ -308,7 +315,8 @@ QByteArray TYResourceServer::getSoundData(const QString& path)
         QObject* decompresser = soundPressPluginDict.value(extension);
         if (decompresser) {
             // 调用解码器
-            for (TYArchiver* arc : ty_archivers) {
+            for (QObject *arc_ : ty_archivers) {
+                TYArchiver* arc = (TYArchiver*)arc_;
                 QByteArray data = arc->unArchivedFile(convPath);
                 if (!data.isEmpty())
                     return data;
@@ -321,7 +329,7 @@ QByteArray TYResourceServer::getSoundData(const QString& path)
 
 void TYResourceServer::addlog(const QString& filename)
 {
-    filelogDict[filename.toUpper()] = true;
+    filelogDict[filename.toUpper()] = new QNumber(true);
 }
 
 void TYResourceServer::setDefaultTransMode(const QString& transmode)
@@ -337,7 +345,7 @@ bool TYResourceServer::fchk(const QString& filename) const
 bool TYResourceServer::filelog(const QString& path)
 {
     filelogDict.clear();
-    filelog = true;
+    filelog_ = true;
     
     QFile file(path);
     if (!file.open(QIODevice::ReadOnly)) {
@@ -364,7 +372,7 @@ bool TYResourceServer::filelog(const QString& path)
         }
         
         QString filename = TY_NSStringAddition::stringWithCSJISString(buf.constData());
-        filelogDict[filename.toUpper()] = true;
+        filelogDict[filename.toUpper()] = new QNumber(true);
     }
     
     file.close();
@@ -373,7 +381,7 @@ bool TYResourceServer::filelog(const QString& path)
 
 bool TYResourceServer::saveLog(const QString& path)
 {
-    if (!filelog) {
+    if (!filelog_) {
         return true;
     }
     
@@ -405,7 +413,7 @@ void TYResourceServer::addEffectPattern(const QString& path)
     QVariant bmp = getBitmap(path);
     if (bmp.canConvert<QImage>()) {
         QImage bitmap = bmp.value<QImage>();
-        TYEffectPatternMap* pattern = new TYEffectPatternMap(bitmap, this);
+        TYEffectPatternMap* pattern = new TYEffectPatternMap(bitmap/*, this*/);
         if (pattern) {
             effectPatternDict[path] = pattern;
         }
@@ -415,11 +423,11 @@ void TYResourceServer::addEffectPattern(const QString& path)
 TYEffectPatternMap* TYResourceServer::getEffectPattern(const QString& path)
 {
     if (effectPatternDict.contains(path)) {
-        return effectPatternDict[path];
+        return (TYEffectPatternMap*)effectPatternDict[path];
     }
     
     addEffectPattern(path);
-    return effectPatternDict.value(path, nullptr);
+    return (TYEffectPatternMap*)effectPatternDict.value(path, nullptr);
 }
 
 void TYResourceServer::executeBundle(const QString& pathAndArg)
@@ -443,8 +451,9 @@ void TYResourceServer::executeBundle(const QString& pathAndArg)
     
     // 检查缓存
     if (executableBundles.contains(bundlePath)) {
-        TYCCSProxy* proxy = TYCCSProxy::proxy();
-        proxy->execPlugin(executableBundles[bundlePath], argStr);
+        //TYCCSProxy* proxy = TYCCSProxy::proxy();
+        TYExecutablePlugin* proxy = nullptr;//TYCCSProxy::proxy();
+        proxy->execPlugin((TYCCScripterProxy*)executableBundles[bundlePath], argStr);
         return;
     }
     
@@ -461,3 +470,4 @@ void TYResourceServer::executeBundle(const QString& pathAndArg)
     // 简化处理：存储库对象
     executableBundles[bundlePath] = nullptr; // TODO: 完善bundle加载
 }
+

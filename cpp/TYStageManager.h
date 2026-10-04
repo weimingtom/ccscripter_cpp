@@ -47,6 +47,8 @@
 #include <QSet>
 #include <QChar>
 
+#include "TYMainController.h" //for TYController
+
 class TYMainController;
 class TYScriptEngine;
 class TYEffectGenerater;
@@ -63,6 +65,7 @@ class TYResourceServer;
 class TYEffectDefinitionValue;
 class TYBar;
 class QLayoutManager;
+//class TYController;
 
 enum TYSkipStatusMask {
     TYNoSkip = 0,
@@ -438,6 +441,7 @@ signals:
 #define DEFAULT_TEXTWINDOW "#999999"
 #define CSEL_SPRITE_NO 500
 #define SPRITE_ALPHA_MAX 255
-
+#if 0
+#endif
 
 #endif // TYSTAGEMANAGER_H

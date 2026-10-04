@@ -33,6 +33,11 @@
 #include <QObject>
 #include <QString>
 #include <QImage>
+#include <QMap>
+#include <QList>
+#include <QImage>
+#include <QByteArray>
+#include <QVariant>
 
 class TYEffectPatternMap;
 
@@ -40,9 +45,19 @@ class TYEffectPatternMap;
 // リソースの要求があった場合、まず各アーカイバの仮想パスとして検索し、次にディスク内の実ファイルを探します。
 class TYResourceServer : public QObject {
     Q_OBJECT
+private:
+    QList<QObject*> ty_archivers;
+    QString defaultTransmode;
+    bool filelog_;
+    QMap<QString, QObject*> filelogDict;
+
+    QMap<QString, QObject*> spiPluginDict;
+    QMap<QString, QObject*> soundPressPluginDict;
+    QMap<QString, QObject*> effectPatternDict;
+    QMap<QString, QObject*> executableBundles;
+
 public:
     static TYResourceServer* sharedServer();
-
 private:
     explicit TYResourceServer(QObject* parent = nullptr);
     ~TYResourceServer();
@@ -50,14 +65,14 @@ private:
 public:
     void addArchiver(const QString& path);
 
-    const QString getFilePath(const QString& path); // ディスク中にファイルが存在するならそのパスを返す。
-//    NSData* getData(const QString& path); // プラグインを使用せずにデータ取得。
-//    NSImage* getImage(const QString& path, bool transMode, bool animate);
-//    NSImage* getImage(const QString& path, bool transMode); // イメージを取得し、タグに従い加工して返す
-//    NSImage* getImageFromString(const QString& str);
-//    NSBitmapImageRep* getBitmap(const QString& path);
-//    NSImage* transrateImageFromBitmap(NSBitmapImageRep* bitmap, const QString& transMode); // private
-//    NSData* getSoundData(const QString& path);
+    QString getFilePath(const QString& path); // ディスク中にファイルが存在するならそのパスを返す。
+    QByteArray getData(const QString& path); // プラグインを使用せずにデータ取得。
+    QImage getImage(const QString& path, bool transMode, bool animate);
+    QImage getImage(const QString& path, bool transMode); // イメージを取得し、タグに従い加工して返す
+    QImage getImageFromString(const QString& str);
+    QVariant/*NSBitmapImageRep**/ getBitmap(const QString& path);
+    QImage transrateImageFromBitmap(const QImage& /*NSBitmapImageRep* */ bitmap, const QString& transMode); // private
+    QByteArray getSoundData(const QString& path);
     TYEffectPatternMap* getEffectPattern(const QString& path);
     QString getFilePathMakeTemp(const QString& path); // ファイルがディスク中に存在しなければ、Tempファイルを作成し、そのパスを返す。
 
@@ -70,8 +85,8 @@ public:
 
 
     bool filelog(const QString& path);
-    bool addlog(const QString& filename);
-    bool fchk(const QString& filename);
+    void addlog(const QString& filename);
+    bool fchk(const QString& filename) const;
     bool saveLog(const QString& path);
 };
 
