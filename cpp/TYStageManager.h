@@ -423,8 +423,8 @@ signals:
     void textPrinted(const QString& text);
     void selectionChanged(int index);
 };
-//#define VSCREEN_WIDTH 640
-//#define VSCREEN_HEIGHT 480
+#define VSCREEN_WIDTH 640
+#define VSCREEN_HEIGHT 480
 
 //extern int VSCREEN_WIDTH;
 //extern int VSCREEN_HEIGHT;

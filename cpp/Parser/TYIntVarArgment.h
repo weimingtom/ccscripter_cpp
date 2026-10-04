@@ -41,7 +41,7 @@ public:
     virtual ~TYIntVarArgment();
 
 // override
-    virtual TYArgment* varID() const override;
+    virtual std::string/*TYArgment**/ varID() const override;
     virtual TYVarType varType() const override;
     virtual TYArgType argType() const override;
     virtual TYArgment* intNumber() const override;

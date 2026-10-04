@@ -49,6 +49,10 @@
 #include <QDir>
 #include <QDataStream>
 #include <QScroller>
+#include <QDebug>
+#include <QTextCodec>
+#include <QApplication> //for qApp
+#include <QMessageBox>
 
 // Constants
 const QString TYNScriptRunTimeErrorException = QString("TYNScriptRunTimeErrorException");
@@ -65,7 +69,7 @@ const QString TYNScriptSyntaxErrorException = QString("TYNScriptSyntaxErrorExcep
 
 #define MAX_LINE_LENGTH 1024
 
-static TYScriptEngine* sharedEngine = nullptr;
+static TYScriptEngine* sharedEngine_ = nullptr;
 
 static const char* newLineCodeUnix = "\n";
 static const char* newLineCodeWin = "\r\n";
@@ -283,7 +287,7 @@ TYScriptPoint TYMakeScriptPoint(unsigned line, unsigned column)
 // Static shared engine accessor
 TYScriptEngine* TYScriptEngine::sharedEngine()
 {
-    return sharedEngine;
+    return sharedEngine_;
 }
 
 // Constructor
@@ -308,7 +312,8 @@ TYScriptEngine::TYScriptEngine(QObject* parent)
 // Initialize with script file
 bool TYScriptEngine::initWithContentsOfFile(const QString& path)
 {
-    QFileManager fileManager;
+    //QFileManager fileManager;
+    QDir dir(path);
     QByteArray scriptData;
     QString truePath;
     QByteArray addData;
@@ -319,7 +324,8 @@ bool TYScriptEngine::initWithContentsOfFile(const QString& path)
     bool scriptMode = false; // mode_single = false, mode_multi = true
 
     // Check for multi-script mode (look for 0.txt)
-    filesArray = fileManager.entryList(path);
+    //FIXME: QDir::Dirs | QDir::NoDotAndDotDot);
+    filesArray = dir.entryList(QDir::Files); //fileManager.entryList(path);
     for (int i = 0; i < filesArray.size(); i++) {
         if (filesArray.at(i) == QString("0.txt")) {
             scriptMode = true;
@@ -414,7 +420,7 @@ bool TYScriptEngine::initWithContentsOfFile(const QString& path)
     // Initialize other structures
     m_numAliases.clear();
     m_strAliases.clear();
-    m_scripterValues = TYScripterValues::scripterValues();
+    m_scripterValues = new TYScripterValues();//::scripterValues();
     m_multiLineCmdStringSet = QSet<QString>() << "select" << "selnum" << "selgosub" << "csel";
     m_returnStack.clear();
     m_timerStartDate = QDateTime::currentDateTime();
@@ -441,7 +447,7 @@ bool TYScriptEngine::initWithContentsOfFile(const QString& path)
     qsrand(seed);
 
     // Store as shared
-    sharedEngine = this;
+    sharedEngine_ = this;
 
     return true;
 }
@@ -476,7 +482,7 @@ int TYScriptEngine::scanGlobalValue()
 QVariantMap TYScriptEngine::encodeWithSaveData()
 {
     QVariantMap aDict;
-    QByteArray valueData;
+    QVariantMap/*QByteArray*/ valueData;
     QVariant pointValue;
 
     valueData = m_scripterValues->encodeWithSaveData();
@@ -490,7 +496,10 @@ QVariantMap TYScriptEngine::encodeWithSaveData()
         m_savePoint.column++;
     }
 
-    pointValue = QVariant::fromValue(m_savePoint);
+TYScriptPoint_cls m_savePoint_;
+m_savePoint_.line = m_savePoint.line;
+m_savePoint_.column = m_savePoint.column;
+    pointValue = QVariant::fromValue(m_savePoint_);
 
     if (m_textgosubPointIndex == -1) {
         aDict[TYLocalValuesSaveData] = valueData;
@@ -522,7 +531,14 @@ void TYScriptEngine::decodeWithSaveData(const QVariant& aObject)
 
     tmp = aMap.value(TYScriptPointSaveData);
     if (tmp.isValid()) {
+#if 0
         m_savePoint = tmp.value<TYScriptPoint>();
+#else        
+TYScriptPoint_cls m_savePoint_;
+m_savePoint_ = tmp.value<TYScriptPoint_cls>();
+m_savePoint.line = m_savePoint_.line;
+m_savePoint.column = m_savePoint_.column;
+#endif        
         m_runLine = m_savePoint.line;
         m_runColumn = m_savePoint.column;
     }
@@ -612,6 +628,10 @@ void TYScriptEngine::runScript()
         m_savePoint.line = m_runLine;
         m_savePoint.column = m_runColumn;
 
+//FIXME:added, see Parser/NScrParser.cpp and Parser/NScrParser.l 
+extern void TYParserSetCString(const char *ptr);
+//FIXME:added, see Parser/NScrParser.tab.cpp (or Parser/NScrParser.y, maybe not)
+extern void yyparse(void);
         // Parse using parser
         TYParserSetCString(currentchars);
         yyparse();
@@ -812,7 +832,7 @@ bool TYScriptEngine::eval(QList<QVariant>* argments)
     return true;
 }
 
-bool TYScriptEngine::breakRun()
+bool TYScriptEngine::breakRun() const
 {
     return m_breakRun;
 }
@@ -1222,9 +1242,11 @@ QString TYScriptEngine::getStringOfArgment(const QString& argment)
     return argment;
 }
 
-QVariant TYScriptEngine::getIdNoOfArgment(TYArgment* argment)
+void */*QVariant*/ TYScriptEngine::getIdNoOfArgment(TYArgment* argment)
 {
-    return argment->varID();
+//FIXME:QString::fromStdString added
+//    return QString::fromStdString(argment->varID());
+    return nullptr;
 }
 
 QVariant TYScriptEngine::getArrayIdOfArgment(const QString& argment)
@@ -1245,7 +1267,8 @@ QVariant TYScriptEngine::getEffectNoOfArgments(QList<QVariant>* argments)
         for (int i = 1; i < argments->size(); i++) {
             newArgs.append(argments->at(i));
         }
-        m_stageManager->ty_effect(&newArgs);
+        //FIXME:no ptr
+        m_stageManager->ty_effect(newArgs/*&newArgs*/);
         return -1;
     }
 }
@@ -1346,7 +1369,7 @@ void TYScriptEngine::ty_getversion(QList<QVariant>* argments)
 {
     if (argments->size() < 2) return;
     QVariant verNum = TYEnviroment::objectForKey(QString("NScripterVersion"));
-    QVariant idno = getIdNoOfArgment(nullptr);
+    void */*QVariant*/ idno = getIdNoOfArgment(nullptr);
     Q_UNUSED(verNum);
     Q_UNUSED(idno);
 }
@@ -1354,7 +1377,8 @@ void TYScriptEngine::ty_getversion(QList<QVariant>* argments)
 void TYScriptEngine::ty_dim(QList<QVariant>* argments)
 {
     if (argments->size() < 2) return;
-    QVariant idno = getIdNoOfArgment(nullptr);
+    //FIXME:
+    QList<QVariant>/*QVariant*/ idno = *((QList<QVariant> *)getIdNoOfArgment(nullptr));
     m_scripterValues->defineArrayValue(idno);
 }
 
@@ -1375,14 +1399,14 @@ void TYScriptEngine::ty_mov(QList<QVariant>* argments)
 {
     if (argments->size() < 3) return;
     QVariant arg = argments->at(1);
-    QVariant idno = getIdNoOfArgment(nullptr);
+    void */*QVariant*/ idno = getIdNoOfArgment(nullptr);
 
     TYVarType type = static_cast<TYVarType>(0); // Would need proper type detection
     Q_UNUSED(type);
 
     // String assignment
     QString strVal = getStringOfArgment(argments->at(2).toString());
-    m_scripterValues->setStringValue(idno, strVal);
+    m_scripterValues->setStringValue(*((QVariant *)idno), strVal);
 
     // Integer assignment (commented out for now - would need type checking)
     // QVariant intVal = getValueOfArgment(argments->at(2).toString());
@@ -1444,7 +1468,8 @@ void TYScriptEngine::movRepeat(int repeat_times, QList<QVariant>* argments)
     QVariant temp = argments->at(2);
     TYVarType type = static_cast<TYVarType>(0); // Would need proper type detection
     Q_UNUSED(type);
-    intId = getIdNoOfArgment(nullptr).toInt();
+//FIXME:
+    intId = (int)(uintptr_t)getIdNoOfArgment(nullptr);//.toInt();
 
     if (true) { // Integer type
         for (i = 0; i < repeat_times; i++, intId++) {
@@ -1468,7 +1493,7 @@ void TYScriptEngine::ty_intlimit(QList<QVariant>* argments)
 void TYScriptEngine::ty_inc(QList<QVariant>* argments)
 {
     if (argments->size() < 2) return;
-    QVariant idno = getIdNoOfArgment(nullptr);
+    QVariant idno = *(QVariant *)getIdNoOfArgment(nullptr);
     int number = m_scripterValues->getIntValue(idno).toInt();
     number++;
     m_scripterValues->setIntValue(idno, number);
@@ -1477,7 +1502,7 @@ void TYScriptEngine::ty_inc(QList<QVariant>* argments)
 void TYScriptEngine::ty_dec(QList<QVariant>* argments)
 {
     if (argments->size() < 2) return;
-    QVariant idno = getIdNoOfArgment(nullptr);
+    QVariant idno = *(QVariant *)getIdNoOfArgment(nullptr);
     int number = m_scripterValues->getIntValue(idno).toInt();
     number--;
     m_scripterValues->setIntValue(idno, number);
@@ -1486,7 +1511,7 @@ void TYScriptEngine::ty_dec(QList<QVariant>* argments)
 void TYScriptEngine::ty_add(QList<QVariant>* argments)
 {
     if (argments->size() < 3) return;
-    QVariant idno = getIdNoOfArgment(nullptr);
+    QVariant idno = *(QVariant *)getIdNoOfArgment(nullptr);
     
     QString argstr = getStringOfArgment(argments->at(2).toString());
     QString string = m_scripterValues->getStringValue(idno);
@@ -1497,7 +1522,7 @@ void TYScriptEngine::ty_add(QList<QVariant>* argments)
 void TYScriptEngine::ty_sub(QList<QVariant>* argments)
 {
     if (argments->size() < 3) return;
-    QVariant idno = getIdNoOfArgment(nullptr);
+    QVariant idno = *(QVariant *)getIdNoOfArgment(nullptr);
     QVariant argnum = getValueOfArgment(argments->at(2).toString());
     int number = m_scripterValues->getIntValue(idno).toInt();
     number -= argnum.toInt();
@@ -1507,7 +1532,7 @@ void TYScriptEngine::ty_sub(QList<QVariant>* argments)
 void TYScriptEngine::ty_mul(QList<QVariant>* argments)
 {
     if (argments->size() < 3) return;
-    QVariant idno = getIdNoOfArgment(nullptr);
+    QVariant idno = *(QVariant *)getIdNoOfArgment(nullptr);
     QVariant argnum = getValueOfArgment(argments->at(2).toString());
     int number = m_scripterValues->getIntValue(idno).toInt();
     number *= argnum.toInt();
@@ -1517,7 +1542,7 @@ void TYScriptEngine::ty_mul(QList<QVariant>* argments)
 void TYScriptEngine::ty_div(QList<QVariant>* argments)
 {
     if (argments->size() < 3) return;
-    QVariant idno = getIdNoOfArgment(nullptr);
+    QVariant idno = *(QVariant *)getIdNoOfArgment(nullptr);
     QVariant argnum = getValueOfArgment(argments->at(2).toString());
     int number = m_scripterValues->getIntValue(idno).toInt();
     if (argnum.toInt() != 0) {
@@ -1529,7 +1554,7 @@ void TYScriptEngine::ty_div(QList<QVariant>* argments)
 void TYScriptEngine::ty_mod(QList<QVariant>* argments)
 {
     if (argments->size() < 3) return;
-    QVariant idno = getIdNoOfArgment(nullptr);
+    QVariant idno = *(QVariant *)getIdNoOfArgment(nullptr);
     QVariant argnum = getValueOfArgment(argments->at(2).toString());
     int number = m_scripterValues->getIntValue(idno).toInt();
     if (argnum.toInt() != 0) {
@@ -1541,7 +1566,7 @@ void TYScriptEngine::ty_mod(QList<QVariant>* argments)
 void TYScriptEngine::ty_cmp(QList<QVariant>* argments)
 {
     if (argments->size() < 4) return;
-    QVariant idno = getIdNoOfArgment(nullptr);
+    QVariant idno = *(QVariant *)getIdNoOfArgment(nullptr);
     QString str1 = getStringOfArgment(argments->at(2).toString());
     QString str2 = getStringOfArgment(argments->at(3).toString());
     int result = QString::compare(str1, str2);
@@ -1551,7 +1576,7 @@ void TYScriptEngine::ty_cmp(QList<QVariant>* argments)
 void TYScriptEngine::ty_atoi(QList<QVariant>* argments)
 {
     if (argments->size() < 3) return;
-    QVariant idno = getIdNoOfArgment(nullptr);
+    QVariant idno = *(QVariant *)getIdNoOfArgment(nullptr);
     QString str = getStringOfArgment(argments->at(2).toString());
     m_scripterValues->setIntValue(idno, str.toInt());
 }
@@ -1559,7 +1584,7 @@ void TYScriptEngine::ty_atoi(QList<QVariant>* argments)
 void TYScriptEngine::ty_itoa(QList<QVariant>* argments)
 {
     if (argments->size() < 3) return;
-    QVariant idno = getIdNoOfArgment(nullptr);
+    QVariant idno = *(QVariant *)getIdNoOfArgment(nullptr);
     QVariant value = getValueOfArgment(argments->at(2).toString());
     m_scripterValues->setStringValue(idno, QString::number(value.toInt()));
 }
@@ -1567,7 +1592,7 @@ void TYScriptEngine::ty_itoa(QList<QVariant>* argments)
 void TYScriptEngine::ty_len(QList<QVariant>* argments)
 {
     if (argments->size() < 3) return;
-    QVariant idno = getIdNoOfArgment(nullptr);
+    QVariant idno = *(QVariant *)getIdNoOfArgment(nullptr);
     QString str = getStringOfArgment(argments->at(2).toString());
     m_scripterValues->setIntValue(idno, str.length());
 }
@@ -1575,7 +1600,7 @@ void TYScriptEngine::ty_len(QList<QVariant>* argments)
 void TYScriptEngine::ty_mid(QList<QVariant>* argments)
 {
     if (argments->size() < 5) return;
-    QVariant idno = getIdNoOfArgment(nullptr);
+    QVariant idno = *(QVariant *)getIdNoOfArgment(nullptr);
     QString inStr = getStringOfArgment(argments->at(2).toString());
     int offset = getValueOfArgment(argments->at(3).toString()).toInt();
     int length = getValueOfArgment(argments->at(4).toString()).toInt();
@@ -1602,7 +1627,7 @@ void TYScriptEngine::ty_splitstring(QList<QVariant>* argments)
 void TYScriptEngine::ty_rnd(QList<QVariant>* argments)
 {
     if (argments->size() < 3) return;
-    QVariant idno = getIdNoOfArgment(nullptr);
+    QVariant idno = *(QVariant *)getIdNoOfArgment(nullptr);
     int max = getValueOfArgment(argments->at(2).toString()).toInt();
     int result = TYRandom(0, max - 1);
     m_scripterValues->setIntValue(idno, result);
@@ -1611,7 +1636,7 @@ void TYScriptEngine::ty_rnd(QList<QVariant>* argments)
 void TYScriptEngine::ty_rnd2(QList<QVariant>* argments)
 {
     if (argments->size() < 4) return;
-    QVariant idno = getIdNoOfArgment(nullptr);
+    QVariant idno = *(QVariant *)getIdNoOfArgment(nullptr);
     int min = getValueOfArgment(argments->at(2).toString()).toInt();
     int max = getValueOfArgment(argments->at(3).toString()).toInt();
     int result = TYRandom(min, max);
@@ -1624,15 +1649,15 @@ void TYScriptEngine::ty_date(QList<QVariant>* argments)
     QDate date = cDate.date();
 
     if (argments->size() >= 2) {
-        QVariant idno = getIdNoOfArgment(nullptr);
+        QVariant idno = *(QVariant *)getIdNoOfArgment(nullptr);
         m_scripterValues->setIntValue(idno, date.year());
     }
     if (argments->size() >= 3) {
-        QVariant idno = getIdNoOfArgment(nullptr);
+        QVariant idno = *(QVariant *)getIdNoOfArgment(nullptr);
         m_scripterValues->setIntValue(idno, date.month());
     }
     if (argments->size() >= 4) {
-        QVariant idno = getIdNoOfArgment(nullptr);
+        QVariant idno = *(QVariant *)getIdNoOfArgment(nullptr);
         m_scripterValues->setIntValue(idno, date.day());
     }
 }
@@ -1643,15 +1668,15 @@ void TYScriptEngine::ty_time(QList<QVariant>* argments)
     QTime time = cDate.time();
 
     if (argments->size() >= 2) {
-        QVariant idno = getIdNoOfArgment(nullptr);
+        QVariant idno = *(QVariant *)getIdNoOfArgment(nullptr);
         m_scripterValues->setIntValue(idno, time.hour());
     }
     if (argments->size() >= 3) {
-        QVariant idno = getIdNoOfArgment(nullptr);
+        QVariant idno = *(QVariant *)getIdNoOfArgment(nullptr);
         m_scripterValues->setIntValue(idno, time.minute());
     }
     if (argments->size() >= 4) {
-        QVariant idno = getIdNoOfArgment(nullptr);
+        QVariant idno = *(QVariant *)getIdNoOfArgment(nullptr);
         m_scripterValues->setIntValue(idno, time.second());
     }
 }
@@ -1699,14 +1724,14 @@ void TYScriptEngine::ty_nsadir(QList<QVariant>* argments)
 void TYScriptEngine::ty_ns2(QList<QVariant>* argments)
 {
     Q_UNUSED(argments);
-    TYNsaArchiver::setMode(TY2TypeNsaFileMode);
+    TYNsaArchiver::setMode(TYNsaFileMode::TY2TypeNsaFileMode);
     ty_nsa(nullptr);
 }
 
 void TYScriptEngine::ty_ns3(QList<QVariant>* argments)
 {
     Q_UNUSED(argments);
-    TYNsaArchiver::setMode(TY3TypeNsaFileMode);
+    TYNsaArchiver::setMode(TYNsaFileMode::TY3TypeNsaFileMode);
     ty_nsa(nullptr);
 }
 
@@ -1733,7 +1758,12 @@ void TYScriptEngine::ty_gosub(QList<QVariant>* argments)
     if (argments->size() < 2) return;
     TYScriptPoint sPoint;
     sPoint = TYMakeScriptPoint(m_runLine, m_runColumn);
-    m_returnStack.append(QVariant::fromValue(sPoint));
+    
+TYScriptPoint_cls sPoint_;
+sPoint_.line = sPoint.line;
+sPoint_.column = sPoint.column;
+
+    m_returnStack.append(QVariant::fromValue(sPoint_));
     labeljump(getStringOfArgment(argments->at(1).toString()));
 }
 
@@ -1742,7 +1772,7 @@ void TYScriptEngine::ty_return(QList<QVariant>* argments)
     Q_UNUSED(argments);
     if (m_returnStack.isEmpty()) return;
     
-    TYScriptPoint sPoint = m_returnStack.last().value<TYScriptPoint>();
+    TYScriptPoint_cls sPoint = m_returnStack.last().value<TYScriptPoint_cls>();
     jump(sPoint.line);
     m_runColumn = sPoint.column;
     m_returnStack.removeLast();
@@ -1787,7 +1817,7 @@ void TYScriptEngine::ty_next(QList<QVariant>* argments)
 
     TYLoopValue* loopValue = m_loopStack.last().value<TYLoopValue*>();
     if (!loopValue) return;
-    loop = loopValue->loopStruct();
+    loop = loopValue->value();//loopStruct();
 
     int now = m_scripterValues->getIntValue(loop.varNo).toInt() + loop.step;
     m_scripterValues->setIntValue(loop.varNo, now);
@@ -1840,7 +1870,7 @@ void TYScriptEngine::ty_waittimer(QList<QVariant>* argments)
 void TYScriptEngine::ty_gettimer(QList<QVariant>* argments)
 {
     if (argments->size() < 2) return;
-    QVariant idno = getIdNoOfArgment(nullptr);
+    QVariant idno = *(QVariant *)getIdNoOfArgment(nullptr);
     qint64 msecs = m_timerStartDate.msecsTo(QDateTime::currentDateTime());
     m_scripterValues->setIntValue(idno, -msecs);
 }
@@ -1850,7 +1880,7 @@ void TYScriptEngine::ty_loadgame(QList<QVariant>* argments)
     if (argments->size() < 2) return;
     QVariant number = getValueOfArgment(argments->at(1).toString());
     if (m_controller) {
-        m_controller->loadLocalData(number);
+        m_controller->loadLocalData(number.toInt());
     }
 }
 
@@ -1859,7 +1889,7 @@ void TYScriptEngine::ty_savegame(QList<QVariant>* argments)
     if (argments->size() < 2) return;
     QVariant number = getValueOfArgment(argments->at(1).toString());
     if (m_controller) {
-        m_controller->saveLocalData(number);
+        m_controller->saveLocalData(number.toInt());
     }
 }
 
@@ -1878,8 +1908,8 @@ void TYScriptEngine::ty_inputstr(QList<QVariant>* argments)
     int length = getValueOfArgment(argments->at(3).toString()).toInt();
     int notAscii = getValueOfArgment(argments->at(4).toString()).toInt();
 
-    QVariant idno = getIdNoOfArgment(nullptr);
-    QString result = input->runModalCaption(caption, length, notAscii);
+    QVariant idno = *(QVariant *)getIdNoOfArgment(nullptr);
+    QString result = QString::number(input->runModalCaption(caption, length, notAscii));
     m_scripterValues->setStringValue(idno, result);
 }
 
@@ -1892,8 +1922,8 @@ void TYScriptEngine::ty_input(QList<QVariant>* argments)
     int length = getValueOfArgment(argments->at(4).toString()).toInt();
     int notAscii = getValueOfArgment(argments->at(5).toString()).toInt();
 
-    QVariant idno = getIdNoOfArgment(nullptr);
-    QString result = input->runModalCaption(caption, length, notAscii);
+    QVariant idno = *(QVariant *)getIdNoOfArgment(nullptr);
+    QString result = QString::number(input->runModalCaption(caption, length, notAscii));
     m_scripterValues->setStringValue(idno, result);
 }
 
@@ -1924,7 +1954,7 @@ void TYScriptEngine::ty_getreg(QList<QVariant>* argments)
     if (!aDict.isEmpty()) {
         QVariantMap keyDict = aDict.value(key).toMap();
         QString value = keyDict.value(name).toString();
-        QVariant idno = getIdNoOfArgment(nullptr);
+        QVariant idno = *(QVariant *)getIdNoOfArgment(nullptr);
         m_scripterValues->setStringValue(idno, value);
     }
 }
@@ -1932,8 +1962,8 @@ void TYScriptEngine::ty_getreg(QList<QVariant>* argments)
 void TYScriptEngine::ty_getcursorpos(QList<QVariant>* argments)
 {
     if (argments->size() < 3) return;
-    QVariant varX = getIdNoOfArgment(nullptr);
-    QVariant varY = getIdNoOfArgment(nullptr);
+    QVariant varX = *(QVariant *)getIdNoOfArgment(nullptr);
+    QVariant varY = *(QVariant *)getIdNoOfArgment(nullptr);
 
     QPoint point = m_stageManager->drawPoint();
     m_scripterValues->setIntValue(varX, static_cast<int>(point.x()));

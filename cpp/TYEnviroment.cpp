@@ -174,12 +174,12 @@ void TYEnviroment::setAudioFilePath(const QString& path)
 
 float TYEnviroment::bgmVolume()
 {
-    return objectForKey(TYBGVolumeEnviroment).toFloat();
+    return objectForKey(TYBGMVolumeEnviroment).toFloat();
 }
 
 void TYEnviroment::setBgmVolume(float volume)
 {
-    setObject(volume, TYBGVolumeEnviroment);
+    setObject(volume, TYBGMVolumeEnviroment);
 }
 
 float TYEnviroment::voiceVolume()

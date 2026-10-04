@@ -73,8 +73,8 @@ public:
     void setController(TYMainController* cont, TYStageManager* manager);
     void runScript();
     bool eval(QList<QVariant>* argments);
-    bool breakRun() const { return m_breakRun; }
-    void setBreakRun(bool aFlag) { m_breakRun = aFlag; }
+    bool breakRun() const;// { return m_breakRun; }
+    void setBreakRun(bool aFlag);// { m_breakRun = aFlag; }
     void lineEnd();
 
     void jump(unsigned target);
@@ -97,7 +97,7 @@ public:
     bool isMultLineSupport(const QString& command);
     char* nextLine();
 
-    QVariant getIdNoOfArgment(TYArgment* argment);
+    void */*QVariant*/ getIdNoOfArgment(TYArgment* argment);
     QVariant getArrayIdOfArgment(const QString& argment);
     QVariant getValueOfArgment(const QString& argment);
     QString getStringOfArgment(const QString& argment);

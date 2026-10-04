@@ -32,6 +32,28 @@
 
 #include <QObject>
 #include <QVariant>
+#include <QMetaType> //for QVariant::fromValue
+
+class TYScriptPoint_cls : public QObject { // スクリプトにおける”座標”
+    Q_OBJECT
+public:
+    unsigned line;
+    unsigned column;
+public:
+    explicit TYScriptPoint_cls(QObject *parent = nullptr) : QObject(parent) {}
+    TYScriptPoint_cls(const TYScriptPoint_cls& pt) {
+        line = pt.line;
+        column = pt.column;
+    }
+    TYScriptPoint_cls& operator=(const TYScriptPoint_cls& pt) {
+        if (this != &pt) {
+             line = pt.line;
+             column = pt.column;
+        }
+        return *this;
+    }
+};
+Q_DECLARE_METATYPE(TYScriptPoint_cls)
 
 struct TYScriptPoint { // スクリプトにおける”座標”
     unsigned line;
